@@ -1,135 +1,198 @@
 #include "mainwindow.h"
-#include "./ui_mainwindow.h"
-#include "scaledpixelmap.h"
-#include <QLabel>
-#include "port.h"
-#include "settings.h"
+
+#include <QFormLayout>
+#include "device.h"
+#include <QtSerialPort/QSerialPort>
+#include "devicepanel.h"
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
-    setWindowTitle(tr("Catch Ass on the ice"));
-    createFileMenu();
-    QWidget* centralWid=new QWidget(this);
-    QHBoxLayout* Hbox=new QHBoxLayout();
-    image.load("D://Qt/untitled5/resourse/hockeyArena.jpg");
-    if(image.isNull()){
-        qDebug("picture dont loaded");
-        }
-    trans.rotate(90);
-    image=image.transformed(trans);
-    ScaledPixelmap* picLabel= new ScaledPixelmap();
-    picLabel->setScaledPixmap((image));
-    picLabel->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(picLabel,&ScaledPixelmap::customContextMenuRequested,
+    FileMenu();
+
+    QWidget* centWid=new QWidget(this);
+    centralHLyaout=new QHBoxLayout();
+    if(hockeyImage.isNull()){
+        qDebug("Изображение не загружено");
+    }
+    QTransform transImg;
+    transImg.rotate(90);
+    hockeyImage= hockeyImage.transformed(transImg);
+    hockeyLabel=new ScaledPixmap();
+    hockeyLabel->setScaledPixmap(hockeyImage);
+    hockeyLabel->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(hockeyLabel,&ScaledPixmap::customContextMenuRequested,
             this,&MainWindow::slotContextMenuPicture);
-    Hbox->addWidget(picLabel);
-    centralWid->setLayout(Hbox);
+    centralHLyaout->addWidget(hockeyLabel);
+    centWid->setLayout(centralHLyaout);
+    setCentralWidget(centWid);
+    serialPort=new Port();
+//    testB->move();
+    testB=new QPushButton("TEST",this);
+    testB->show();
+oldSize=size();
 
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
 }
 
-void MainWindow::createFileMenu()
+void MainWindow::slotContextMenuButton(QPoint pos)
 {
-   fileMenu=menuBar()->addMenu("Файл");
-   QAction* setting=new QAction(tr("Настройки"));
-   connect(setting,SIGNAL(triggered(bool)),this,SLOT(showSettings()));
-   fileMenu->addAction(setting);
-
-   deviceMenu=menuBar()->addMenu("Настройка устроств");
-   deviceMenu->addAction("Назначить устройства");
-   deviceMenu->addAction("Настройка порта");
+    qDebug()<<" Right context button";
 }
 
-void MainWindow::createMenu()
+void MainWindow::slotFshowDevicePanel()
 {
-QAction *hockeyArena=new QAction("Хоккей",this);
-QAction *curlingArena=new QAction("Кёрлинг",this);
-QMenu *arenaMenu=menuBar()->addMenu("Выберете арену");
-arenaMenu->addAction(curlingArena);
-arenaMenu->addAction(hockeyArena);
-QMenu *fileMenu=menuBar()->addMenu(tr("File"));
-
-
+// devicePanel *panel=new devicePanel();
+// panel->FaddNewDevice();
+// panel->show();
+    serialPort->showWidget();
 }
 
-void MainWindow::createStatusBar()
+void MainWindow::device1Print()
 {
-
-
-}
-
-void MainWindow::createToolBar()
-{
-    QToolBar *toolBar=new QToolBar("Выберите арену",this);
-    toolBar->addAction("A");
-    toolBar->addAction("B");
-    addToolBar(toolBar);
-}
-
-void MainWindow::createTextEditor()
-{
-
-}
-
-void MainWindow::resizeEvent(QResizeEvent *e)
-{
-
-}
-
-void MainWindow::addDock()
-{
-    QDockWidget   *contentsWindow = new QDockWidget(tr("Table of Contents"), this);
-    contentsWindow->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    QListWidget *headingList = new QListWidget(contentsWindow);
-    QListWidgetItem *newItem = new QListWidgetItem;
-    newItem->setText("itemText");
-    headingList->insertItem(0, newItem);
-
-    contentsWindow->setWidget(headingList);
-    setCorner(Qt::TopLeftCorner, Qt::LeftDockWidgetArea);
-    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
-    setCorner(Qt::TopRightCorner, Qt::RightDockWidgetArea);
-    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
-    addDockWidget(Qt::LeftDockWidgetArea,contentsWindow);
+    QGroupBox *device1=new QGroupBox("Device1",hockeyLabel);
+    QVBoxLayout *vbox=new QVBoxLayout;
+    vbox->addStretch(1);
+    QLabel *lbName=new QLabel("Keeek1",device1);
+    QLabel *lbNm=new QLabel("Keeek2",device1);
+    vbox->addWidget(lbName);
+    vbox->addWidget(lbNm);
+    device1->setLayout(vbox);
+    device1->show();
+    device1->move(mapFromGlobal(QCursor::pos()));
+    qDebug()<<"BoxG x/y"<<size().width()-hockeyLabel->size().width()<<"/"<<size().height()-hockeyLabel->size().height();
+////    dev1.move((QCursor::pos()));
+//    dev1.show();
+    qDebug()<<("device 1");
 }
 
 void MainWindow::slotContextMenuPicture(QPoint pos)
 {
-    qDebug()<<"Right click on picture";
-    QMenu* menu=new QMenu(this);
-    QAction* device1=new QAction("Device2",this);
+    qDebug()<<" Right context picture";
+   QMenu* menu =new QMenu(this);
 
-    menu->addAction("Device 1");
-    menu->addAction(device1);
-    connect(device1, SIGNAL(triggered()), this, SLOT(deviceAdd()));
+    QAction* device1=menu->addAction("sd");
+    QAction* device2=menu->addAction("sd2");
+
+    qDebug()<<"Right click";
+    connect(device1,SIGNAL(triggered()),this,SLOT(device1Print()));
+    connect(device2,SIGNAL(triggered()),this,SLOT(device1Print()));
     menu->exec(QCursor::pos());
-    qDebug()<<QCursor::pos();
+    qDebug()<<QCursor::pos()<<"/"<<mapFromGlobal(QCursor::pos());
 
 }
 
-void MainWindow::deviceAdd()
-{
-qDebug()<<"Вызов девайса";
-QLabel* deviceLabel=new QLabel(this);
-deviceLabel->setText("Keks Text");
-deviceLabel->move(QCursor::pos());
-deviceLabel->show();
-}
 
-void MainWindow::showSettings()
+void MainWindow::CentralWidgetUI()
 {
-    Port* serialPort=new Port();
 
 }
 
-void MainWindow::contextMenuEvent(QContextMenuEvent *)
+void MainWindow::DockeWidgetsUI()
 {
 
+ QDockWidget *dock = new QDockWidget(tr("Customers"), this);
+     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+     //QListWidget*  customerList = new QListWidget(dock);
+     // container QWidget to put QVBoxLayout containing QLabel and QTextEdit
+//      QWidget *widDockWid = new QWidget(dock);
+      QVBoxLayout *layoutDockWid = new QVBoxLayout();
+      QLabel *labelTemp = new QLabel(tr("Температура"));
+      QLabel *labelMac = new QLabel(tr("MAC адрес"));
+      layoutDockWid->addWidget(labelTemp);
+      layoutDockWid->addWidget(labelMac);
+
+//      widDockWid->setLayout(layoutDockWid);
+//      dock->setWidget(widDockWid);
+//      widDockWid->setVisible(true);
+
+        layoutDockWid->setAlignment(Qt::AlignTop);
+      horizontalGroupBox->setLayout(layoutDockWid);
+      dock->setWidget(horizontalGroupBox);
+    addDockWidget(Qt::RightDockWidgetArea, dock);
+
+
+
+}
+
+void MainWindow::StatusBarUI()
+{
+
+}
+
+void MainWindow::ToolsCreateUI()
+{
+newPanel=addToolBar(tr("New pane"));
+
+}
+
+void MainWindow::FileMenu()
+{
+    QAction *Afile=new QAction("Файл",this);
+    QAction *Asetting=new QAction("Настройки",this);
+    fileMenu=menuBar()->addMenu(tr("&Файл"));
+    fileMenu->addAction(Afile);
+    fileMenu->addSeparator();
+    fileMenu->addAction(Asetting);
+    deviceMenu=menuBar()->addMenu(tr("&Панель девайсов"));
+    QAction *devicePanel=new QAction("Панель девайсов",this);
+    deviceMenu->addAction(devicePanel);
+    connect(devicePanel,SIGNAL(triggered()),this,SLOT(slotFshowDevicePanel()));
+
+
+}
+
+void MainWindow::MenuUI()
+{
+
+}
+
+void MainWindow::makeItem(QListWidget *lstWgt)
+{
+}
+
+void MainWindow::onBtnClicked()
+{
+
+}
+
+void MainWindow::createRightClickMenu(QMouseEvent* eventMouse, QMenu *menu)
+{
+    if(Qt::RightButton==eventMouse->button()){
+        menu =new QMenu(this);
+        menu->addAction("sd");
+        qDebug()<<"Right click";
+        menu->exec(eventMouse->globalPos());
+    }
+    eventMouse->accept();
+
+}
+
+void MainWindow::paintEvent(QPaintEvent * const event)
+{
+    qDebug()<<"Размер окна"<<size();
+}
+
+
+//void MainWindow::mousePressEvent(QMouseEvent *event)
+//{
+//    createRightClickMenu(event,fileMenu);
+
+//}
+
+void MainWindow::contextMenuEvent(QContextMenuEvent *event)
+{
+
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event_resize)
+{
+    qDebug()<<"Called resize event";
+    qDebug()<<"New size: "<<size();
+    qDebug()<<"Old size: "<<oldSize;
+    qDebug()<<"Devers: "<<oldSize-size();
+    testB->move(oldSize.width()-size().width()+100,oldSize.height()-size().height()+100);
 }
 

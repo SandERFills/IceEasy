@@ -21,7 +21,7 @@ class Port : public QWidget
 public:
     Port();
     ~Port();
-
+    void showWidget();
 
 
 signals:

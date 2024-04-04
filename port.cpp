@@ -28,13 +28,17 @@ Port::Port()
     serialOut=new QTextEdit();
     vBox->addWidget(serialOut);
     portWidget->setLayout(vBox);
-    portWidget->show();
 
 }
 
 Port::~Port()
 {
-closeCom();
+    closeCom();
+}
+
+void Port::showWidget()
+{
+portWidget->show();
 }
 void Port::connectToCom(){
     qDebug()<<"Try to connect";
@@ -50,12 +54,14 @@ void Port::connectToCom(){
 void Port::receiveData(){
     QByteArray buff;
     qDebug()<<"Start recive Data";
-buff=(serialport.readAll());
+    buff=(serialport.readAll());
     if(!buff.isEmpty()){
     QString str;
     str+=(buff);
     serialOut->append(str);
     }
+    qDebug()<<"T index: "<<buff.indexOf("T");
+    qDebug()<<buff;
     buff.clear();
 }
 void Port::closeCom(){
